@@ -1,0 +1,54 @@
+:: get detail about the public key
+root@kali:/u01/easyctf_2018/alexctf_rsa# openssl rsa -pubin -in key.pub -text -noout
+Public-Key: (399 bit)
+Modulus:
+    52:a9:9e:24:9e:e7:cf:3c:0c:bf:96:3a:00:96:61:
+    77:2b:c9:cd:f6:e1:e3:fb:fc:6e:44:a0:7a:5e:0f:
+    89:44:57:a9:f8:1c:3a:e1:32:ac:56:83:d3:5b:28:
+    ba:5c:32:42:43
+Exponent: 65537 (0x10001)
+
+
+:: hex to decimal modulus gives below which we will use factordb to get the two prime numbers:
+
+833810193564967701912362955539789451139872863794534923259743419423089229206473091408403560311191545764221310666338878019
+
+p = 863653476616376575308866344984576466644942572246900013156919
+q = 965445304326998194798282228842484732438457170595999523426901
+
+:: install gmpy2
+
+apt-get install libgmp-dev
+apt-get install libmpfr-dev
+apt-get install libmpc-dev
+
+pip install gmpy2
+
+:: recreate the private key:
+
+root@kali:/u01/easyctf_2018/alexctf_rsa# python build_private_config.py > priv.conf
+
+root@kali:/u01/easyctf_2018/alexctf_rsa# openssl asn1parse -genconf priv.conf -out priv.der -noout
+
+root@kali:/u01/easyctf_2018/alexctf_rsa# base64 -d flag.b64 | openssl rsautl -decrypt -inkey priv.der -keyform der
+ALEXCTF{SMALL_PRIMES_ARE_BAD}
+
+root@kali:/u01/easyctf_2018/alexctf_rsa# cat flag | openssl rsautl -decrypt -inkey priv.der -keyform der
+ALEXCTF{SMALL_PRIMES_ARE_BAD}
+
+:: brute with rsactftool
+
+root@kali:/u01/easyctf_2018/alexctf_rsa# python /u01/easyctf_2018/RsaCtfTool/RsaCtfTool.py --publickey ./key.pub  --uncipher ./flag --verbose --private
+[*] Performing Pollard_p_1 attack.
+[*] Performing hastads attack.
+[*] Performing factordb attack.
+-----BEGIN RSA PRIVATE KEY-----
+MIH5AgEAAjJSqZ4knufPPAy/ljoAlmF3K8nN9uHj+/xuRKB6Xg+JRFep+Bw64TKs
+VoPTWyi6XDJCQwIDAQABAjIzrQnKBvUPnpCxrK5x85DWuS8dbTtmFP+HEYHE3wja
+TF9QEkV6ZDCUBers1jQeQwJ5MQIaAImWgwYMdrnA3lgaaeDqnZG+0Qcb6x2SSjcC
+GgCZzedK7e6Hrf/daEy8R451mHC08gaS9lJVAhlmZEB1y+i/LC1L27xXycIhqKPe
+aoR6qVfZAhlbPhKLmhFavne/AqQbQhwaWT/rqHUL9EMtAhk5pem+TgbW3zCYF8v7
+j0mjJ31NC+0sLmx5
+-----END RSA PRIVATE KEY-----
+[+] Clear text : �&�d��#H�u6Lۮ��:ALEXCTF{SMALL_PRIMES_ARE_BAD}
+
